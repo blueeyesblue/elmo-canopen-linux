@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; text-anchor: middle; fill: #000; }
+      .module { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; text-anchor: middle; fill: #000; }
+      .function { font-family: Arial, sans-serif; font-size: 11px; text-anchor: start; fill: #000; }
+      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .dependency { stroke: #666; stroke-width: 1; stroke-dasharray: 5,5; fill: none; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="800" height="600" fill="white" stroke="#ddd" stroke-width="1"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" class="title">Elmo CANopen 伺服电机驱动器架构图</text>
+  
+  <!-- Main Application Layer -->
+  <rect x="320" y="60" width="160" height="80" fill="#e6f3ff" stroke="#0066cc" stroke-width="2" rx="5"/>
+  <text x="400" y="85" class="module">main.c</text>
+  <text x="330" y="105" class="function">• 程序入口点</text>
+  <text x="330" y="120" class="function">• 测试位置/力控制</text>
+  <text x="330" y="135" class="function">• 系统初始化</text>
+  
+  <!-- Elmo Control Layer -->
+  <rect x="50" y="200" width="200" height="120" fill="#fff2e6" stroke="#ff6600" stroke-width="2" rx="5"/>
+  <text x="150" y="225" class="module">elmo.h / elmo.c</text>
+  <text x="60" y="245" class="function">• 电机控制接口</text>
+  <text x="60" y="260" class="function">• setPosition() / getPosition()</text>
+  <text x="60" y="275" class="function">• setForce() / getForce()</text>
+  <text x="60" y="290" class="function">• startMotor() / stopMotor()</text>
+  <text x="60" y="305" class="function">• setUnitMode() / setSpeed()</text>
+  
+  <!-- CAN Communication Layer -->
+  <rect x="350" y="200" width="200" height="120" fill="#f0fff0" stroke="#009900" stroke-width="2" rx="5"/>
+  <text x="450" y="225" class="module">can.h / can.c</text>
+  <text x="360" y="245" class="function">• CAN总线通信</text>
+  <text x="360" y="260" class="function">• TCanConstruct() / TCanOpen()</text>
+  <text x="360" y="275" class="function">• sendPDO2() / receivePDO2()</text>
+  <text x="360" y="290" class="function">• createFrame() / sendFrame()</text>
+  <text x="360" y="305" class="function">• 数据格式转换</text>
+  
+  <!-- Hardware Layer -->
+  <rect x="200" y="380" width="200" height="80" fill="#ffe6e6" stroke="#cc0000" stroke-width="2" rx="5"/>
+  <text x="300" y="405" class="module">Linux CAN Socket</text>
+  <text x="210" y="425" class="function">• SocketCAN 接口</text>
+  <text x="210" y="440" class="function">• can0 网络接口</text>
+  <text x="210" y="455" class="function">• CANopen 协议</text>
+  
+  <!-- Elmo Motor Controller -->
+  <rect x="200" y="500" width="200" height="60" fill="#f5f5f5" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="300" y="525" class="module">Elmo 伺服驱动器</text>
+  <text x="210" y="545" class="function">• CANopen 节点 ID: 127</text>
+  
+  <!-- Arrows showing dependencies -->
+  <line x1="400" y1="140" x2="400" y2="190" class="arrow"/>
+  <line x1="400" y1="140" x2="150" y2="190" class="arrow"/>
+  
+  <line x1="150" y1="320" x2="300" y2="370" class="arrow"/>
+  <line x1="450" y1="320" x2="350" y2="370" class="arrow"/>
+  
+  <line x1="300" y1="460" x2="300" y2="490" class="arrow"/>
+  
+  <!-- Dependency lines -->
+  <line x1="250" y1="260" x2="350" y2="260" class="dependency"/>
+  
+  <!-- Legend -->
+  <rect x="580" y="200" width="180" height="120" fill="#f9f9f9" stroke="#999" stroke-width="1" rx="3"/>
+  <text x="670" y="220" class="module">图例</text>
+  <line x1="590" y1="235" x2="620" y2="235" class="arrow"/>
+  <text x="630" y="240" class="function">调用关系</text>
+  <line x1="590" y1="255" x2="620" y2="255" class="dependency"/>
+  <text x="630" y="260" class="function">依赖关系</text>
+  
+  <!-- Data Flow -->
+  <text x="580" y="280" class="function">数据流向:</text>
+  <text x="590" y="295" class="function">main → elmo → can</text>
+  <text x="590" y="310" class="function">→ Linux Socket → 硬件</text>
+  
+</svg>

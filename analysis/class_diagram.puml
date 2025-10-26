@@ -1,0 +1,137 @@
+@startuml Elmo_CANopen_Class_Diagram
+!theme plain
+title Elmo CANopen 项目类图 (标准UML)
+
+' 设置样式
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+
+package "CAN Communication Layer" {
+    struct TCan {
+        - char* iface
+        - struct sockaddr_can addr
+        - struct ifreq ifr
+        - unsigned int id
+        - int socket
+        --
+        + TCanConstruct(const char* iface) : TCan*
+        + TCanDestruct(TCan* can) : void
+        + TCanOpen(TCan* can, int canid) : int
+        + TCanClose(TCan* can) : int
+        + setOperational(TCan* can) : int
+        + setPreOperational(TCan* can) : int
+        + createFrame(can_frame* frame, int id, int size, char* data) : void
+        + sendFrame(TCan* can, can_frame* frame) : int
+        + sendPDO2(TCan* can, int size, char* data) : int
+        + receivePDO2(TCan* can, can_frame* frame) : int
+        + sendPDO2DiscardReply(TCan* can, int size, char* data) : int
+        + setDataInt(char* data, int pos, int value) : void
+        + setDataFloat(char* data, int pos, float value) : void
+        + intFromData(char* data, int pos) : int
+        + floatFromData(char* data, int pos) : float
+    }
+    
+    class CANModule <<module>> {
+        + TCanConstruct(const char* iface) : TCan*
+        + TCanDestruct(TCan* can) : void
+        + TCanOpen(TCan* can, int canid) : int
+        + TCanClose(TCan* can) : int
+        + setOperational(TCan* can) : int
+        + sendPDO2(TCan* can, int size, char* data) : int
+        + receivePDO2(TCan* can, can_frame* frame) : int
+        + createFrame(can_frame* frame, int id, int size, char* data) : void
+        + sendFrame(TCan* can, can_frame* frame) : int
+        + setDataInt(char* data, int pos, int value) : void
+        + setDataFloat(char* data, int pos, float value) : void
+        + intFromData(char* data, int pos) : int
+        + floatFromData(char* data, int pos) : float
+    }
+}
+
+package "Motor Control Layer" {
+    enum Mode {
+        MODE_POS = 5
+        MODE_TORQUE = 1
+    }
+    
+    class ElmoModule <<module>> {
+        + sendEchoMessage(TCan* can) : int
+        + setPosition(TCan* can, int pos) : int
+        + getPosition(TCan* can, int* pos) : int
+        + setForce(TCan* can, float force) : int
+        + getForce(TCan* can, float* force) : int
+        + startMotor(TCan* can) : int
+        + stopMotor(TCan* can) : int
+        + beginMotion(TCan* can) : int
+        + stop(TCan* can) : int
+        + setUnitMode(TCan* can, Mode mode) : int
+        + setSpeed(TCan* can, int speed) : int
+        + setAbsolutePosition(TCan* can, int pos) : int
+        + setRelativePosition(TCan* can, int pos) : int
+        + setTorque(TCan* can, float torque) : int
+        + getMaxCurrent(TCan* can, float* current) : int
+        + setLimits(TCan* can, int vmin, int vmax, float fmin, float fmax) : int
+    }
+}
+
+package "Application Layer" {
+    class MainModule <<module>> {
+        + main() : int
+        + test(TCan* can) : void
+        + test_position(TCan* can) : void
+        + test_force(TCan* can) : void
+        + print_info(TCan* can) : void
+    }
+}
+
+package "Configuration" {
+    class Config <<utility>> {
+        + {static} CAN_INTERFACE = "can0"
+        + {static} CANOPEN_ID = 127
+        + {static} PDO2_COB_ID_SEND = 0x301-0x37f
+        + {static} RPDO2_COB_ID_RECV = 0x281-0x2ff
+    }
+}
+
+package "Protocol" {
+    interface CANopenProtocol {
+        + PDO_COMMUNICATION
+        + POSITION_CONTROL_MODE
+        + TORQUE_CONTROL_MODE
+        + ASCII_COMMAND_FORMAT
+        + DATA_LENGTH_4_8_BYTES
+    }
+}
+
+' UML 关系定义
+' 组合关系 - CANModule 创建和管理 TCan 实例
+CANModule *-- TCan : creates/manages
+
+' 依赖关系 - ElmoModule 使用 CANModule 和 TCan
+ElmoModule ..> CANModule : uses
+ElmoModule ..> TCan : uses
+
+' 依赖关系 - ElmoModule 使用 Mode 枚举
+ElmoModule ..> Mode : uses
+
+' 依赖关系 - MainModule 使用其他模块
+MainModule ..> ElmoModule : uses
+MainModule ..> TCan : uses
+
+' 实现关系 - CANModule 实现 CANopen 协议
+CANModule ..|> CANopenProtocol : implements
+
+' 使用关系 - 各模块使用配置
+CANModule ..> Config : uses
+ElmoModule ..> Config : uses
+MainModule ..> Config : uses
+
+' 注释
+note right of TCan : CAN设备抽象\n管理socket连接\n处理CAN帧
+note right of Mode : 电机控制模式\n位置控制/扭矩控制
+note bottom of CANModule : CAN通信层\n负责底层通信
+note bottom of ElmoModule : Elmo电机控制层\n提供高级控制接口
+note bottom of MainModule : 应用程序入口\n测试和演示功能
+
+@enduml

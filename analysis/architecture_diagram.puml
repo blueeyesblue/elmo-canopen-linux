@@ -1,0 +1,111 @@
+@startuml Elmo_CANopen_Architecture
+!theme plain
+title Elmo CANopen 伺服电机驱动器架构图
+
+' 定义颜色和样式
+skinparam component {
+    BackgroundColor<<application>> #e6f3ff
+    BorderColor<<application>> #0066cc
+    BackgroundColor<<control>> #fff2e6
+    BorderColor<<control>> #ff6600
+    BackgroundColor<<communication>> #f0fff0
+    BorderColor<<communication>> #009900
+    BackgroundColor<<hardware>> #ffe6e6
+    BorderColor<<hardware>> #cc0000
+    BackgroundColor<<device>> #f5f5f5
+    BorderColor<<device>> #333333
+}
+
+skinparam note {
+    BackgroundColor #f9f9f9
+    BorderColor #999999
+}
+
+' 定义包和组件
+package "应用层 (Application Layer)" as AppLayer {
+    component [main.c] <<application>> as MainApp
+    note right of MainApp
+        • 程序入口点
+        • 测试位置/力控制
+        • 系统初始化
+        • test() / test_position() / test_force()
+    end note
+}
+
+package "控制层 (Control Layer)" as ControlLayer {
+    component [elmo.h / elmo.c] <<control>> as ElmoControl
+    note right of ElmoControl
+        • 电机控制接口
+        • setPosition() / getPosition()
+        • setForce() / getForce()
+        • startMotor() / stopMotor()
+        • setUnitMode() / setSpeed()
+        • beginMotion() / stop()
+    end note
+}
+
+package "通信层 (Communication Layer)" as CommLayer {
+    component [can.h / can.c] <<communication>> as CANComm
+    note right of CANComm
+        • CAN总线通信
+        • TCanConstruct() / TCanOpen()
+        • sendPDO2() / receivePDO2()
+        • createFrame() / sendFrame()
+        • 数据格式转换
+        • setDataInt() / setDataFloat()
+    end note
+}
+
+package "硬件抽象层 (Hardware Layer)" as HardwareLayer {
+    component [Linux CAN Socket] <<hardware>> as LinuxCAN
+    note right of LinuxCAN
+        • SocketCAN 接口
+        • can0 网络接口
+        • CANopen 协议支持
+        • 内核级CAN驱动
+    end note
+}
+
+package "设备层 (Device Layer)" as DeviceLayer {
+    component [Elmo 伺服驱动器] <<device>> as ElmoDevice
+    note right of ElmoDevice
+        • CANopen 节点 ID: 127
+        • 位置/力矩控制模式
+        • 实时反馈
+        • 硬件安全保护
+    end note
+}
+
+' 定义关系和数据流
+MainApp --> ElmoControl : 调用控制接口
+MainApp --> CANComm : 直接CAN通信
+ElmoControl --> CANComm : 使用CAN通信
+CANComm --> LinuxCAN : 系统调用
+LinuxCAN --> ElmoDevice : CAN总线协议
+
+' 依赖关系 (虚线)
+ElmoControl ..> CANComm : 依赖
+
+' 数据流注释
+note as DataFlow
+    **数据流向:**
+    main → elmo → can → Linux Socket → 硬件
+    
+    **通信协议:**
+    • CANopen PDO2 通信
+    • ASCII 命令格式
+    • 4-8字节数据长度
+    • COB-ID: 0x301-0x37f (发送)
+    • COB-ID: 0x281-0x2ff (接收)
+end note
+
+' 配置信息
+note as ConfigInfo
+    **系统配置:**
+    • CAN接口: can0
+    • CANopen节点ID: 127
+    • 控制模式: 位置模式(5) / 力矩模式(1)
+    • 通信速率: 标准CAN (125kbps-1Mbps)
+end note
+
+@enduml
