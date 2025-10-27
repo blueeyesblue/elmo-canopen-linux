@@ -14,39 +14,27 @@ package "CAN Communication Layer" {
         - struct ifreq ifr
         - unsigned int id
         - int socket
-        --
-        + TCanConstruct(const char* iface) : TCan*
-        + TCanDestruct(TCan* can) : void
-        + TCanOpen(TCan* can, int canid) : int
-        + TCanClose(TCan* can) : int
-        + setOperational(TCan* can) : int
-        + setPreOperational(TCan* can) : int
-        + createFrame(can_frame* frame, int id, int size, char* data) : void
-        + sendFrame(TCan* can, can_frame* frame) : int
-        + sendPDO2(TCan* can, int size, char* data) : int
-        + receivePDO2(TCan* can, can_frame* frame) : int
-        + sendPDO2DiscardReply(TCan* can, int size, char* data) : int
-        + setDataInt(char* data, int pos, int value) : void
-        + setDataFloat(char* data, int pos, float value) : void
-        + intFromData(char* data, int pos) : int
-        + floatFromData(char* data, int pos) : float
     }
     
-    class CANModule <<module>> {
-        + TCanConstruct(const char* iface) : TCan*
-        + TCanDestruct(TCan* can) : void
-        + TCanOpen(TCan* can, int canid) : int
-        + TCanClose(TCan* can) : int
-        + setOperational(TCan* can) : int
-        + sendPDO2(TCan* can, int size, char* data) : int
-        + receivePDO2(TCan* can, can_frame* frame) : int
-        + createFrame(can_frame* frame, int id, int size, char* data) : void
-        + sendFrame(TCan* can, can_frame* frame) : int
-        + setDataInt(char* data, int pos, int value) : void
-        + setDataFloat(char* data, int pos, float value) : void
-        + intFromData(char* data, int pos) : int
-        + floatFromData(char* data, int pos) : float
+    class CANFunctions <<utility>> {
+        + {static} TCanConstruct(const char* iface) : TCan*
+        + {static} TCanDestruct(TCan* can) : void
+        + {static} TCanOpen(TCan* can, int canid) : int
+        + {static} TCanClose(TCan* can) : int
+        + {static} setOperational(TCan* can) : int
+        + {static} setPreOperational(TCan* can) : int
+        + {static} createFrame(can_frame* frame, int id, int size, char* data) : void
+        + {static} sendFrame(TCan* can, can_frame* frame) : int
+        + {static} sendPDO2(TCan* can, int size, char* data) : int
+        + {static} receivePDO2(TCan* can, can_frame* frame) : int
+        + {static} sendPDO2DiscardReply(TCan* can, int size, char* data) : int
+        + {static} setDataInt(char* data, int value) : void
+        + {static} setDataFloat(char* data, float value) : void
+        + {static} intFromData(char* data) : int
+        + {static} floatFromData(char* data) : float
     }
+    
+    note right of CANFunctions : can.h / can.c\n独立的C函数集合\n非面向对象设计
 }
 
 package "Motor Control Layer" {
@@ -105,11 +93,11 @@ package "Protocol" {
 }
 
 ' UML 关系定义
-' 组合关系 - CANModule 创建和管理 TCan 实例
-CANModule *-- TCan : creates/manages
+' 依赖关系 - CANFunctions 操作 TCan 结构体
+CANFunctions ..> TCan : operates on
 
-' 依赖关系 - ElmoModule 使用 CANModule 和 TCan
-ElmoModule ..> CANModule : uses
+' 依赖关系 - ElmoModule 使用 CANFunctions 和 TCan
+ElmoModule ..> CANFunctions : uses
 ElmoModule ..> TCan : uses
 
 ' 依赖关系 - ElmoModule 使用 Mode 枚举
@@ -119,19 +107,19 @@ ElmoModule ..> Mode : uses
 MainModule ..> ElmoModule : uses
 MainModule ..> TCan : uses
 
-' 实现关系 - CANModule 实现 CANopen 协议
-CANModule ..|> CANopenProtocol : implements
+' 实现关系 - CANFunctions 实现 CANopen 协议
+CANFunctions ..|> CANopenProtocol : implements
 
 ' 使用关系 - 各模块使用配置
-CANModule ..> Config : uses
+CANFunctions ..> Config : uses
 ElmoModule ..> Config : uses
 MainModule ..> Config : uses
 
 ' 注释
-note right of TCan : CAN设备抽象\n管理socket连接\n处理CAN帧
-note right of Mode : 电机控制模式\n位置控制/扭矩控制
-note bottom of CANModule : CAN通信层\n负责底层通信
-note bottom of ElmoModule : Elmo电机控制层\n提供高级控制接口
-note bottom of MainModule : 应用程序入口\n测试和演示功能
+note right of TCan : CAN设备结构体\n存储socket连接信息\n由C函数操作
+note right of Mode : 电机控制模式枚举\n位置控制/扭矩控制
+note bottom of CANFunctions : CAN通信函数集合\n(can.h/can.c)\n独立的C函数
+note bottom of ElmoModule : Elmo电机控制函数\n(elmo.h/elmo.c)\n高级控制接口
+note bottom of MainModule : 应用程序入口\n(main.c)\n测试和演示功能
 
 @enduml
